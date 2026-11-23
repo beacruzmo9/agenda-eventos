@@ -130,6 +130,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - (S0) Solo datos básicos + enlace a la fuente; sin textos completos ni imágenes ajenas.
 - (S0) Priorizar fuentes públicas y APIs oficiales; agregadores privados solo con permiso.
 - (S0) Favoritos en el navegador (sin cuentas).
+- (S0) Repositorio público `beacruzmo9/agenda-eventos` (solo la propietaria y Claude pueden modificarlo) → GitHub Pages.
 
 ## 7. Preguntas abiertas (pendientes de respuesta)
 1. Nombre de la web (y de la cuenta/repositorio de GitHub). Repositorio: `beacruzmo9/agenda-eventos`. Nombre público de la web: pendiente.
@@ -143,7 +144,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 9. ¿Qué titular aparecerá en el aviso legal (persona física o asociación)?
 
 ## 8. Estado actual
-- **Sesión 0 (2026-11-23)**: creado el repositorio `beacruzmo9/agenda-eventos` en GitHub con este CLAUDE.md, README y .gitignore. Cuenta de GitHub conectada a Claude (app instalada). Pendiente: decidir si el repo queda público (GitHub Pages) o privado (Netlify/Cloudflare Pages).
+- **Sesión 0 (2026-11-23)**: creado el repositorio `beacruzmo9/agenda-eventos` en GitHub con este CLAUDE.md, README y .gitignore. Cuenta de GitHub conectada a Claude (app instalada). El repo es **público** → alojamiento en GitHub Pages.
 - **Siguiente paso**: responder las preguntas abiertas (sección 7) y empezar la **Fase 1**.
 
 ## 9. Registro de sesiones
