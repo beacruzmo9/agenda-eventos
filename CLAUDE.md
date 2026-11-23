@@ -55,6 +55,7 @@ Forma de trabajar:
 ```json
 {
   "id": "ayto-2026-12-05-concierto-x",
+  "city": "granada",
   "title": "Concierto X",
   "start": "2026-12-05T21:00:00+01:00",
   "end": null,
@@ -131,21 +132,24 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - (S0) Priorizar fuentes públicas y APIs oficiales; agregadores privados solo con permiso.
 - (S0) Favoritos en el navegador (sin cuentas).
 - (S0) Repositorio público `beacruzmo9/agenda-eventos` (solo la propietaria y Claude pueden modificarlo) → GitHub Pages.
+- (S0) Multiciudad e idiomas ES/EN previstos desde el principio; solo Granada capital activa.
 
-## 7. Preguntas abiertas (pendientes de respuesta)
-1. Nombre de la web (y de la cuenta/repositorio de GitHub). Repositorio: `beacruzmo9/agenda-eventos`. Nombre público de la web: pendiente.
-2. Ámbito: ¿solo Granada capital o también área metropolitana / provincia?
-3. Cine: ¿incluir la cartelera comercial completa (muchísimas sesiones) o solo cine "evento" (ciclos, filmoteca, estrenos especiales, cine de verano)?
-4. Eventos pasados: ¿se ocultan o se guarda un archivo consultable?
-5. Formulario: ¿moderación manual antes de publicar (recomendado) o publicación directa?
-6. Idioma: ¿solo español o también inglés (turistas, Erasmus)?
-7. ¿Analítica de visitas (sin cookies) sí o no?
-8. ¿Habrá publicidad/afiliación en algún momento? (afecta al aviso legal)
-9. ¿Qué titular aparecerá en el aviso legal (persona física o asociación)?
+## 7. Respuestas de la propietaria (S0) y decisiones derivadas
+1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). Propuesta de Claude: **Agendalia** (alternativas: *Qué Plan Hoy*, *Ciudad en Vivo*). ⏳ Pendiente de que la propietaria elija y compruebe dominio (.es/.com) libre. Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
+   → **Multiciudad desde el diseño**: campo `city` en eventos y lugares, URLs `/{idioma}/{ciudad}/...` (ej. `/es/granada/`), conectores agrupados por ciudad (`scrapers/granada/`). Solo Granada activa al principio.
+2. **Ámbito**: Granada capital. Área metropolitana/provincia más adelante.
+3. **Cine** (a criterio de Claude): incluir cine "evento" — filmoteca, ciclos, cineclubs (p. ej. UGR), cine de verano, VOS especiales, preestrenos, festivales. **No** la cartelera comercial completa (cientos de sesiones, ahogaría el resto); en su lugar, enlace a la cartelera de cada cine en la página del lugar.
+4. **Eventos pasados** (a criterio de Claude): se ocultan del listado y calendario por defecto; se guardan en un **archivo** consultable (por mes y en la página de cada lugar). Datos pasados en ficheros separados por mes para que la web siga ligera.
+5. **Formulario**: moderación manual por la propietaria antes de publicar.
+6. **Idiomas**: español e inglés. Se traduce la interfaz, categorías y textos fijos; los títulos de los eventos se muestran tal cual vienen de la fuente (sin traducir).
+7. **Analítica** (recomendación): GoatCounter (gratuito, sin cookies, sin banner). Se configura en Fase 7.
+8. **Publicidad/afiliación**: no, por ahora.
+9. **Titular**: la propietaria (persona física). Aviso legal con su nombre y un email de contacto dedicado (recomendado crear uno solo para la web). Con NIF si en algún momento hay actividad económica.
 
 ## 8. Estado actual
 - **Sesión 0 (2026-11-23)**: creado el repositorio `beacruzmo9/agenda-eventos` en GitHub con este CLAUDE.md, README y .gitignore. Cuenta de GitHub conectada a Claude (app instalada). El repo es **público** → alojamiento en GitHub Pages.
-- **Siguiente paso**: responder las preguntas abiertas (sección 7) y empezar la **Fase 1**.
+- Preguntas de la sección 7 respondidas. Solo falta elegir el nombre definitivo de la web (no bloquea: en Fase 1 se usa como variable de configuración).
+- **Siguiente paso**: empezar la **Fase 1** (con multiciudad e idiomas ES/EN previstos desde el esqueleto).
 
 ## 9. Registro de sesiones
 - S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases.
