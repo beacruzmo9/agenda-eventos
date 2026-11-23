@@ -1,7 +1,7 @@
 import type { Category, CityId } from './config';
 
 export interface Price {
-  free: boolean;
+  free: boolean | null; // null = precio desconocido ("Consultar")
   min?: number | null;
   max?: number | null;
   text?: string | null;
