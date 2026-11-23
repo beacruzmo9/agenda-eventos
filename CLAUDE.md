@@ -159,7 +159,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 
 ## 8. Estado actual
 - **Fase 1 hecha (S1, 2026-11-23)**: web Astro con listado agrupado por día, filtros (texto, cuándo, gratis/pago, tipos), ES/EN, estructura multiciudad, modo oscuro, diseño móvil probado (captura iPhone OK, filtros OK, sin errores JS). 15 eventos de ejemplo con aviso visible (`SAMPLE_DATA = true`). Workflow `deploy.yml` creado.
-- ⏳ **Pendiente de la propietaria**: activar GitHub Pages (Settings → Pages → Source: "GitHub Actions") y comprobar que la web carga en https://beacruzmo9.github.io/agenda-eventos/. Si el primer workflow falló antes de activarlo, relanzarlo (Actions → "Publicar web" → Run workflow).
+- ✅ GitHub Pages activado (Source: GitHub Actions). Web publicada y comprobada por la propietaria: https://beacruzmo9.github.io/agenda-eventos/ (el workflow también se ejecuta solo cada día a las 04:00 UTC).
 - Mejoras menores anotadas para más adelante: guardar filtros en la URL (para compartir enlaces), botón "volver arriba", página de detalle por evento.
 - **Siguiente paso: Fase 2** — revisar condiciones/formato de la agenda de granada.org, programar el conector en Python (`scrapers/granada/ayuntamiento.py`) que escriba `data/granada/events.json` y `venues.json`, añadirlo al workflow diario (antes del build) y poner `SAMPLE_DATA = false` cuando haya datos reales. Último paso: actualizar CLAUDE.md.
 
