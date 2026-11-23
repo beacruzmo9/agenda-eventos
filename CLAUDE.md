@@ -82,9 +82,16 @@ Las exposiciones (eventos de varios días) llevan `start` y `end` con `all_day: 
 /src/pages/[lang]/index.astro          → ciudad por defecto (futuro selector de ciudad)
 /src/pages/[lang]/[city]/index.astro   listado agrupado por día + filtros (JS inline)
 /src/styles/global.css  estilos, modo oscuro automático
-/data/<ciudad>/events.json, venues.json   (ahora: 15 eventos de EJEMPLO, Fase 2 los genera)
-/scrapers/              (Fase 2) conectores Python
-/.github/workflows/deploy.yml   build + publicar en GitHub Pages (push, manual y diario 04:00 UTC)
+/data/<ciudad>/events.json      eventos próximos (GENERADO por scrapers/run.py, no editar a mano)
+/data/<ciudad>/venues.json      lugares (los de los conectores se añaden solos; los manuales se conservan)
+/data/<ciudad>/sources/<fuente>.json   último resultado bueno de cada conector
+/data/<ciudad>/archive/AAAA-MM.json    eventos ya pasados (archivo)
+/scrapers/common.py     sesión HTTP educada (UA AgendaliaBot, robots.txt, pausa 1,5 s), fechas en español
+/scrapers/granada/ugr.py   conector CANAL UGR
+/scrapers/run.py        ejecuta conectores (lista CONNECTORS), fusiona, archiva  → `python -m scrapers.run`
+/scrapers/tests/        pruebas sin red → `python -m unittest discover -s scrapers/tests -t .`
+/docs/email-ayuntamiento.md   borrador de email para pedir acceso a la agenda municipal
+/.github/workflows/deploy.yml   pruebas → recoger eventos → commit de data/ en main → build → GitHub Pages (push, manual y diario 04:00 UTC)
 ```
 - Astro 7 en la raíz del repo (no en /site). `npm run dev` / `npm run build`.
 - URL actual: https://beacruzmo9.github.io/agenda-eventos/ (`base: '/agenda-eventos'` en astro.config.mjs; quitarlo al pasar a dominio propio).
@@ -98,9 +105,10 @@ Recordatorio legal clave: en la UE, aunque los *hechos* (fecha, hora, lugar) no 
 
 | Fuente | Valoración | Motivo |
 |---|---|---|
-| Agenda del Ayuntamiento (granada.org) | ✅ **Empezar aquí** | Información del sector público, reutilizable por defecto (Ley 37/2007) citando la fuente. Comprobar si hay RSS/iCal/datos abiertos o si hay que leer el HTML. |
-| Universidad de Granada (agenda cultural UGR / La Madraza) | ✅ Prioridad alta | Organismo público, mucha actividad gratuita. Comprobar RSS/iCal. |
-| Diputación de Granada / Junta de Andalucía (datos abiertos, agenda cultural) | ✅ Prioridad alta | Sector público; la Junta publica portal de datos abiertos. Comprobar si hay dataset de eventos. |
+| Agenda del Ayuntamiento (granada.org) | ⛔ **Bloqueada (S2)** | Sector público (Ley 37/2007), pero granada.org (Akamai) devuelve 403 "Access Denied" a servidores en la nube, **incluido GitHub Actions** (comprobado). La agenda cultural está en `granada.org/inet/wagenda.nsf` (Lotus Notes, solo HTML; sin RSS/iCal/datos abiertos encontrados). Pendiente: email de la propietaria pidiendo formato reutilizable o acceso (borrador en docs/). |
+| Universidad de Granada (CANAL UGR) | ✅ **Conector hecho (S2)** | `canal.ugr.es/agenda-canal-ugr/proximas-actividades/` (HTML, ~3 páginas, ~45 actividades) + ficha de cada actividad solo para el campo de entrada (se cachea). Existe también `/wp-json/SI2/v1/agenda` pero solo da el día actual. robots.txt lo permite. Se descartan: actos institucionales, seminarios académicos (título "Seminario…/Defensa…"), sedes de Ceuta/Melilla/Santa Fe y en línea. |
+| Junta de Andalucía (datos abiertos) | 🟡 Poco útil para Granada capital | API `datos.juntadeandalucia.es/api/v0/schedule/all?format=json` (CC BY 4.0, ~900 eventos, mayoría antiguos). Solo 1 evento futuro en Granada capital (nov. 2026). Conector sencillo posible en Fase 3, baja prioridad. |
+| Diputación de Granada | ❓ Sin evaluar | Fase 3. |
 | Ticketmaster Discovery API | ✅ Buena opción | API oficial gratuita con clave; permite mostrar datos básicos con enlace. Cubre parte de los grandes conciertos. |
 | Eventbrite API | 🟡 Parcial | Su API ya no permite buscar eventos por ciudad (se retiró en 2019-2020); solo eventos de organizadores/lugares concretos cuyo ID conozcamos. |
 | Webs de salas y teatros | 🟡 Caso a caso | Muchas tienen iCal/RSS o calendario sencillo. **Pedir permiso por email** (casi siempre dicen que sí: es publicidad gratis). Mejor aún: invitarles a usar el formulario. |
@@ -129,7 +137,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 |---|---|---|
 | 0 ✅ | Preguntas, arquitectura, plan, repo con CLAUDE.md | Este archivo |
 | 1 ✅ | Esqueleto web Astro + esquema de datos + datos de ejemplo + listado con filtros (tipo, gratis/pago, fecha) + diseño móvil. Publicar en GitHub Pages | Web visible con datos de prueba |
-| 2 | Primer conector real (Ayuntamiento) + GitHub Action diaria que actualiza y despliega | Web con datos reales que se actualiza sola |
+| 2 ✅ | Primer conector real (UGR; Ayuntamiento bloqueado) + GitHub Action diaria que actualiza y despliega | Web con datos reales que se actualiza sola |
 | 3 | Más fuentes públicas/APIs: UGR, Diputación/Junta, Ticketmaster (y Eventbrite por organizador) + deduplicación | Más cobertura |
 | 4 | Vista calendario | Calendario mensual/semanal |
 | 5 | Lugares (venues.yaml normalizado, página por lugar) + Favoritos de eventos y lugares | Sección "Mis favoritos" |
@@ -144,6 +152,8 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - (S0) Favoritos en el navegador (sin cuentas).
 - (S0) Repositorio público `beacruzmo9/agenda-eventos` (solo la propietaria y Claude pueden modificarlo) → GitHub Pages.
 - (S0) Multiciudad e idiomas ES/EN previstos desde el principio; solo Granada capital activa.
+- (S2) Los datos generados se guardan en el repo (commit automático del bot) → historial y "último dato bueno" aunque una fuente falle. Si un conector devuelve <30 % de los eventos que tenía, se considera fallo y se conserva lo anterior.
+- (S2) La UGR publica muchos seminarios de investigación: se filtran por título para no ahogar la agenda cultural. Revisar el criterio si la propietaria lo pide.
 
 ## 7. Respuestas de la propietaria (S0) y decisiones derivadas
 1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). **Elegido: Agendalia.** ⏳ Pendiente: comprobar si agendalia.es / .com están libres (no comprar aún). Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
@@ -161,8 +171,12 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - **Fase 1 hecha (S1, 2026-11-23)**: web Astro con listado agrupado por día, filtros (texto, cuándo, gratis/pago, tipos), ES/EN, estructura multiciudad, modo oscuro, diseño móvil probado (captura iPhone OK, filtros OK, sin errores JS). 15 eventos de ejemplo con aviso visible (`SAMPLE_DATA = true`). Workflow `deploy.yml` creado.
 - ✅ GitHub Pages activado (Source: GitHub Actions). Web publicada y comprobada por la propietaria: https://beacruzmo9.github.io/agenda-eventos/ (el workflow también se ejecuta solo cada día a las 04:00 UTC).
 - Mejoras menores anotadas para más adelante: guardar filtros en la URL (para compartir enlaces), botón "volver arriba", página de detalle por evento.
-- **Siguiente paso: Fase 2** — revisar condiciones/formato de la agenda de granada.org, programar el conector en Python (`scrapers/granada/ayuntamiento.py`) que escriba `data/granada/events.json` y `venues.json`, añadirlo al workflow diario (antes del build) y poner `SAMPLE_DATA = false` cuando haya datos reales. Último paso: actualizar CLAUDE.md.
+- **Fase 2 hecha (S2, 2026-11-23)**: granada.org bloquea GitHub (403) → primer conector real = **CANAL UGR** (36 eventos útiles al estrenarlo: exposiciones, cineclub, conferencias, conciertos). `SAMPLE_DATA = false`, eventos de ejemplo eliminados. Precio desconocido → `price.free: null` y se muestra "Consultar" (no aparece en filtros gratis/de pago). Workflow: pruebas → `scrapers.run` (si falla, se publica igual con los últimos datos buenos) → commit automático de `data/` en main → build. Probado en GitHub Actions desde la rama de trabajo.
+- Entorno cloud de Claude: entorno personal `agenda-eventos` con acceso a granada.org, canal.ugr.es y datos/www.juntadeandalucia.es. Para nuevas fuentes hay que añadir el dominio.
+- ⏳ **Pendiente de la propietaria**: (1) fusionar la rama `claude/zen-archimedes-p0y0ak` en `main` (pull request) para que la recogida diaria empiece; (2) enviar el email al Ayuntamiento (docs/email-ayuntamiento.md).
+- **Siguiente paso: Fase 3** — más fuentes: Ticketmaster Discovery API (necesita clave gratuita), Diputación, Junta (baja prioridad), webs de salas con iCal; deduplicación entre fuentes. Si el Ayuntamiento responde, conector de granada.org.
 
 ## 9. Registro de sesiones
 - S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases. Repo creado. Nombre: Agendalia.
 - S1 — 2026-11-23 — Fase 1: esqueleto web, filtros, ES/EN, datos de ejemplo, workflow de GitHub Pages.
+- S2 — 2026-11-23 — Fase 2: granada.org bloquea servidores en la nube (también GitHub) → conector CANAL UGR, recogida diaria en la Action, datos reales en la web, archivo de eventos pasados, borrador de email al Ayuntamiento.
