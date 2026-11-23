@@ -1,0 +1,141 @@
+---
+import Base from '../../../layouts/Base.astro';
+import EventCard from '../../../components/EventCard.astro';
+import { CITIES, CATEGORIES, LANGS, SITE_NAME, type Lang } from '../../../lib/config';
+import { getUpcomingEvents, getVenues, type EventItem } from '../../../lib/data';
+import { t, categoryName, locales } from '../../../lib/i18n';
+
+export function getStaticPaths() {
+  return LANGS.flatMap((lang) => CITIES.map((city) => ({ params: { lang, city: city.id }, props: { lang, city } })));
+}
+
+const { lang, city } = Astro.props as { lang: Lang; city: (typeof CITIES)[number] };
+const s = t(lang);
+const tz = city.timezone;
+const events = getUpcomingEvents(city.id);
+const venues = getVenues(city.id);
+
+// Agrupar por día (en la zona horaria de la ciudad). Lo que empezó antes de hoy y sigue → "En curso".
+const dayKey = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d); // AAAA-MM-DD
+const todayKey = dayKey(new Date());
+const groups = new Map<string, EventItem[]>();
+for (const e of events) {
+  const k = dayKey(new Date(e.start));
+  const key = k < todayKey ? 'ongoing' : k;
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(e);
+}
+const ordered = [...groups.entries()].sort(([a], [b]) => (a === 'ongoing' ? -1 : b === 'ongoing' ? 1 : a.localeCompare(b)));
+const dayLabel = (key: string) =>
+  key === 'ongoing'
+    ? s.ongoing
+    : new Intl.DateTimeFormat(locales[lang], { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${key}T12:00:00Z`));
+
+const usedCategories = CATEGORIES.filter((c) => events.some((e) => e.category === c));
+const title = `${SITE_NAME} ${city.name} · ${s.tagline}`;
+---
+<Base lang={lang} title={title} description={`${s.tagline}: ${city.name}`} path={`${city.id}/`}>
+  <h1 class="city-title">{city.name}</h1>
+
+  <form class="filters" id="filters" onsubmit="return false">
+    <input type="search" name="q" placeholder={s.search} aria-label={s.search} class="search" />
+
+    <fieldset class="chips" aria-label={s.when}>
+      <legend class="sr-only">{s.when}</legend>
+      {[
+        ['all', s.whenAll], ['today', s.whenToday], ['weekend', s.whenWeekend], ['week', s.whenWeek], ['month', s.whenMonth],
+      ].map(([v, label], i) => (
+        <label class="chip"><input type="radio" name="when" value={v} checked={i === 0} /><span>{label}</span></label>
+      ))}
+    </fieldset>
+
+    <fieldset class="chips" aria-label={s.price}>
+      <legend class="sr-only">{s.price}</legend>
+      {[
+        ['all', s.priceAll], ['free', s.priceFree], ['paid', s.pricePaid],
+      ].map(([v, label], i) => (
+        <label class="chip"><input type="radio" name="price" value={v} checked={i === 0} /><span>{label}</span></label>
+      ))}
+    </fieldset>
+
+    <fieldset class="chips scroll" aria-label={s.categories}>
+      <legend class="sr-only">{s.categories}</legend>
+      {usedCategories.map((c) => (
+        <label class="chip"><input type="checkbox" name="cat" value={c} /><span>{categoryName(lang, c)}</span></label>
+      ))}
+    </fieldset>
+
+    <div class="result-bar">
+      <span id="count" aria-live="polite">{s.results(events.length)}</span>
+      <button type="reset" class="link-btn" id="clear">{s.clear}</button>
+    </div>
+  </form>
+
+  <div id="list">
+    {ordered.map(([key, list]) => (
+      <section class="day" data-day={key}>
+        <h2 class="day-title">{dayLabel(key)}</h2>
+        {list.map((e) => <EventCard event={e} venue={venues.get(e.venue_id)} lang={lang} timezone={tz} />)}
+      </section>
+    ))}
+  </div>
+  <p id="empty" class="empty" hidden>{s.noResults}</p>
+
+  <script is:inline define:vars={{ resultsOne: s.results(1), resultsMany: s.results(2) }}>
+    (() => {
+      const form = document.getElementById('filters');
+      const cards = [...document.querySelectorAll('.event')];
+      const days = [...document.querySelectorAll('.day')];
+      const count = document.getElementById('count');
+      const empty = document.getElementById('empty');
+      const fmt = (n) => (n === 1 ? resultsOne : resultsMany.replace('2', String(n)));
+
+      const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+      const endOfDay = (d) => { const x = new Date(d); x.setHours(23, 59, 59, 999); return x; };
+      const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+
+      function range(when) {
+        const now = new Date();
+        const today = startOfDay(now);
+        switch (when) {
+          case 'today': return [today, endOfDay(now)];
+          case 'weekend': {
+            const dow = today.getDay(); // 0 = domingo
+            const fri = dow === 0 ? addDays(today, -2) : dow === 6 ? addDays(today, -1) : addDays(today, 5 - dow);
+            return [fri < today ? today : fri, endOfDay(addDays(fri, 2))];
+          }
+          case 'week': return [today, endOfDay(addDays(today, 6))];
+          case 'month': return [today, endOfDay(addDays(today, 29))];
+          default: return [today, null];
+        }
+      }
+
+      function apply() {
+        const data = new FormData(form);
+        const q = String(data.get('q') || '').trim().toLowerCase();
+        const [from, to] = range(String(data.get('when')));
+        const price = data.get('price');
+        const cats = data.getAll('cat');
+        let n = 0;
+        for (const c of cards) {
+          const start = new Date(c.dataset.start);
+          const end = new Date(c.dataset.end);
+          const ok =
+            end >= from && (!to || start <= to) &&
+            (price === 'all' || (price === 'free') === (c.dataset.free === '1')) &&
+            (cats.length === 0 || cats.includes(c.dataset.category)) &&
+            (!q || c.dataset.search.includes(q));
+          c.hidden = !ok;
+          if (ok) n++;
+        }
+        for (const d of days) d.hidden = !d.querySelector('.event:not([hidden])');
+        count.textContent = fmt(n);
+        empty.hidden = n > 0;
+      }
+
+      form.addEventListener('input', apply);
+      form.addEventListener('reset', () => setTimeout(apply));
+      apply();
+    })();
+  </script>
+</Base>

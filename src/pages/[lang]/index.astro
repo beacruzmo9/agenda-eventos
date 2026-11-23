@@ -1,0 +1,18 @@
+---
+// /es/ y /en/ → ciudad por defecto (cuando haya varias ciudades, aquí irá el selector).
+import { DEFAULT_CITY, LANGS, SITE_NAME, url } from '../../lib/config';
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const target = url(`${Astro.params.lang}/${DEFAULT_CITY}/`);
+---
+<!doctype html>
+<html lang={Astro.params.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{SITE_NAME}</title>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={target} />
+  </head>
+  <body><p><a href={target}>{SITE_NAME}</a></p></body>
+</html>

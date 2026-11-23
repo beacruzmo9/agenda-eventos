@@ -1,0 +1,23 @@
+---
+// Raíz: redirige al idioma del navegador (es/en) y a la ciudad por defecto.
+import { DEFAULT_CITY, DEFAULT_LANG, SITE_NAME, url } from '../lib/config';
+const fallback = url(`${DEFAULT_LANG}/${DEFAULT_CITY}/`);
+const en = url(`en/${DEFAULT_CITY}/`);
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{SITE_NAME}</title>
+    <link rel="canonical" href={fallback} />
+    <script is:inline define:vars={{ fallback, en }}>
+      const l = (navigator.language || 'es').toLowerCase();
+      location.replace(l.startsWith('es') ? fallback : en);
+    </script>
+    <noscript><meta http-equiv="refresh" content={`0; url=${fallback}`} /></noscript>
+  </head>
+  <body>
+    <p><a href={fallback}>{SITE_NAME}</a></p>
+  </body>
+</html>

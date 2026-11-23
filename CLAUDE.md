@@ -1,4 +1,4 @@
-# Agenda Granada — memoria del proyecto
+# Agendalia — memoria del proyecto
 
 > Este archivo es la memoria compartida entre sesiones. **Léelo entero al empezar cada sesión y actualízalo al terminar** (sección "Estado actual" y "Registro de sesiones").
 
@@ -21,8 +21,9 @@ Forma de trabajar:
 - Sesiones cortas, **una fase por sesión**. No adelantar fases sin pedirlo.
 - Cuando la propietaria tenga que hacer algo (cuentas, configuración), explicarlo **paso a paso y en lenguaje sencillo**.
 - Idioma de trabajo: español.
+- **Último paso obligatorio de CADA fase/sesión**: actualizar este CLAUDE.md con lo que se ha hecho y lo que falta (secciones 5, 8 y 9), hacer commit y push.
 
-## 2. Arquitectura propuesta (pendiente de confirmar en Fase 1)
+## 2. Arquitectura (confirmada en Fase 1)
 
 ```
             GitHub Actions (cron diario ~05:00 Europe/Madrid)
@@ -70,14 +71,24 @@ Forma de trabajar:
 ```
 Las exposiciones (eventos de varios días) llevan `start` y `end` con `all_day: true`.
 
-### Estructura de carpetas prevista
+### Estructura de carpetas (real)
 ```
-/scrapers        conectores por fuente + normalización + dedupe
-/data            events.json, venues.json (generados) + venues.yaml (lugares a mano)
-/site            web Astro
-/.github/workflows/update.yml   actualización diaria + despliegue
-CLAUDE.md, README.md
+/src/lib/config.ts      nombre web, idiomas, ciudades, categorías, SAMPLE_DATA, url()
+/src/lib/i18n.ts        textos ES/EN y nombres de categorías
+/src/lib/data.ts        tipos EventItem/Venue y lectura de data/<ciudad>/*.json
+/src/layouts/Base.astro cabecera (logo, selector idioma), aviso datos de ejemplo, pie
+/src/components/EventCard.astro
+/src/pages/index.astro                 redirige según idioma del navegador → /es|en/granada/
+/src/pages/[lang]/index.astro          → ciudad por defecto (futuro selector de ciudad)
+/src/pages/[lang]/[city]/index.astro   listado agrupado por día + filtros (JS inline)
+/src/styles/global.css  estilos, modo oscuro automático
+/data/<ciudad>/events.json, venues.json   (ahora: 15 eventos de EJEMPLO, Fase 2 los genera)
+/scrapers/              (Fase 2) conectores Python
+/.github/workflows/deploy.yml   build + publicar en GitHub Pages (push, manual y diario 04:00 UTC)
 ```
+- Astro 7 en la raíz del repo (no en /site). `npm run dev` / `npm run build`.
+- URL actual: https://beacruzmo9.github.io/agenda-eventos/ (`base: '/agenda-eventos'` en astro.config.mjs; quitarlo al pasar a dominio propio).
+- Filtros: búsqueda de texto, cuándo (todo/hoy/finde/7 días/30 días), gratis/de pago, tipos (multiselección). Exposiciones en curso aparecen en el grupo "En curso".
 
 ## 3. Fuentes de datos — evaluación inicial
 
@@ -117,7 +128,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 | Fase | Contenido | Resultado |
 |---|---|---|
 | 0 ✅ | Preguntas, arquitectura, plan, repo con CLAUDE.md | Este archivo |
-| 1 | Esqueleto web Astro + esquema de datos + datos de ejemplo + listado con filtros (tipo, gratis/pago, fecha) + diseño móvil. Publicar en GitHub Pages | Web visible con datos de prueba |
+| 1 ✅ | Esqueleto web Astro + esquema de datos + datos de ejemplo + listado con filtros (tipo, gratis/pago, fecha) + diseño móvil. Publicar en GitHub Pages | Web visible con datos de prueba |
 | 2 | Primer conector real (Ayuntamiento) + GitHub Action diaria que actualiza y despliega | Web con datos reales que se actualiza sola |
 | 3 | Más fuentes públicas/APIs: UGR, Diputación/Junta, Ticketmaster (y Eventbrite por organizador) + deduplicación | Más cobertura |
 | 4 | Vista calendario | Calendario mensual/semanal |
@@ -135,7 +146,7 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - (S0) Multiciudad e idiomas ES/EN previstos desde el principio; solo Granada capital activa.
 
 ## 7. Respuestas de la propietaria (S0) y decisiones derivadas
-1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). Propuesta de Claude: **Agendalia** (alternativas: *Qué Plan Hoy*, *Ciudad en Vivo*). ⏳ Pendiente de que la propietaria elija y compruebe dominio (.es/.com) libre. Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
+1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). **Elegido: Agendalia.** ⏳ Pendiente: comprobar si agendalia.es / .com están libres (no comprar aún). Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
    → **Multiciudad desde el diseño**: campo `city` en eventos y lugares, URLs `/{idioma}/{ciudad}/...` (ej. `/es/granada/`), conectores agrupados por ciudad (`scrapers/granada/`). Solo Granada activa al principio.
 2. **Ámbito**: Granada capital. Área metropolitana/provincia más adelante.
 3. **Cine** (a criterio de Claude): incluir cine "evento" — filmoteca, ciclos, cineclubs (p. ej. UGR), cine de verano, VOS especiales, preestrenos, festivales. **No** la cartelera comercial completa (cientos de sesiones, ahogaría el resto); en su lugar, enlace a la cartelera de cada cine en la página del lugar.
@@ -147,9 +158,11 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 9. **Titular**: la propietaria (persona física). Aviso legal con su nombre y un email de contacto dedicado (recomendado crear uno solo para la web). Con NIF si en algún momento hay actividad económica.
 
 ## 8. Estado actual
-- **Sesión 0 (2026-11-23)**: creado el repositorio `beacruzmo9/agenda-eventos` en GitHub con este CLAUDE.md, README y .gitignore. Cuenta de GitHub conectada a Claude (app instalada). El repo es **público** → alojamiento en GitHub Pages.
-- Preguntas de la sección 7 respondidas. Solo falta elegir el nombre definitivo de la web (no bloquea: en Fase 1 se usa como variable de configuración).
-- **Siguiente paso**: empezar la **Fase 1** (con multiciudad e idiomas ES/EN previstos desde el esqueleto).
+- **Fase 1 hecha (S1, 2026-11-23)**: web Astro con listado agrupado por día, filtros (texto, cuándo, gratis/pago, tipos), ES/EN, estructura multiciudad, modo oscuro, diseño móvil probado (captura iPhone OK, filtros OK, sin errores JS). 15 eventos de ejemplo con aviso visible (`SAMPLE_DATA = true`). Workflow `deploy.yml` creado.
+- ⏳ **Pendiente de la propietaria**: activar GitHub Pages (Settings → Pages → Source: "GitHub Actions") y comprobar que la web carga en https://beacruzmo9.github.io/agenda-eventos/. Si el primer workflow falló antes de activarlo, relanzarlo (Actions → "Publicar web" → Run workflow).
+- Mejoras menores anotadas para más adelante: guardar filtros en la URL (para compartir enlaces), botón "volver arriba", página de detalle por evento.
+- **Siguiente paso: Fase 2** — revisar condiciones/formato de la agenda de granada.org, programar el conector en Python (`scrapers/granada/ayuntamiento.py`) que escriba `data/granada/events.json` y `venues.json`, añadirlo al workflow diario (antes del build) y poner `SAMPLE_DATA = false` cuando haya datos reales. Último paso: actualizar CLAUDE.md.
 
 ## 9. Registro de sesiones
-- S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases.
+- S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases. Repo creado. Nombre: Agendalia.
+- S1 — 2026-11-23 — Fase 1: esqueleto web, filtros, ES/EN, datos de ejemplo, workflow de GitHub Pages.
