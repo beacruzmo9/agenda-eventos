@@ -91,6 +91,7 @@ a { color: inherit; }
 .event-side { grid-column: 2; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .price { font-size: .9rem; font-weight: 600; }
 .price.free { color: var(--free); background: var(--free-soft); padding: 1px 8px; border-radius: 6px; }
+.price.unknown { font-weight: 400; color: var(--muted, #666); }
 .source-link { font-size: .85rem; color: var(--accent); text-decoration: none; }
 .source-link:hover { text-decoration: underline; }
 .cat { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); font-weight: 600; }

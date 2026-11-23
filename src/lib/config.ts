@@ -13,7 +13,7 @@ export type CityId = (typeof CITIES)[number]['id'];
 export const DEFAULT_CITY: CityId = 'granada';
 
 // Mientras sea true, se muestra un aviso de "datos de ejemplo".
-export const SAMPLE_DATA = true;
+export const SAMPLE_DATA = false;
 
 export const CATEGORIES = [
   'concierto',

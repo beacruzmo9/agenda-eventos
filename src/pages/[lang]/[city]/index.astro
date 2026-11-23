@@ -122,7 +122,7 @@ const title = `${SITE_NAME} ${city.name} · ${s.tagline}`;
           const end = new Date(c.dataset.end);
           const ok =
             end >= from && (!to || start <= to) &&
-            (price === 'all' || (price === 'free') === (c.dataset.free === '1')) &&
+            (price === 'all' || (price === 'free' ? c.dataset.free === '1' : c.dataset.free === '0')) &&
             (cats.length === 0 || cats.includes(c.dataset.category)) &&
             (!q || c.dataset.search.includes(q));
           c.hidden = !ok;
