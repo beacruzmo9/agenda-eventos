@@ -88,6 +88,8 @@ Las exposiciones (eventos de varios días) llevan `start` y `end` con `all_day: 
 /data/<ciudad>/archive/AAAA-MM.json    eventos ya pasados (archivo)
 /scrapers/common.py     sesión HTTP educada (UA CiudadEnVivoBot, robots.txt, pausa 1,5 s, 3 intentos ante 429/5xx/cortes: esperas 5 s y 20 s, respeta Retry-After), fechas en español
 /scrapers/granada/ugr.py   conector CANAL UGR
+/scrapers/granada/ticketmaster.py   conector Ticketmaster Discovery API (clave en env TICKETMASTER_API_KEY; sin clave se salta → SkipSource)
+/scrapers/dedupe.py     fusiona el mismo evento de varias fuentes (mismo día + título parecido + mismo lugar u hora); gana la fuente que va antes en CONNECTORS; el enlace de la otra va a "also"
 /scrapers/run.py        ejecuta conectores (lista CONNECTORS), fusiona, archiva  → `python -m scrapers.run`
 /scrapers/tests/        pruebas sin red → `python -m unittest discover -s scrapers/tests -t .`
 /docs/email-ayuntamiento.md   borrador de email para pedir acceso a la agenda municipal
@@ -108,8 +110,8 @@ Recordatorio legal clave: en la UE, aunque los *hechos* (fecha, hora, lugar) no 
 | Agenda del Ayuntamiento (granada.org) | ⛔ **Bloqueada (S2)** | Sector público (Ley 37/2007), pero granada.org (Akamai) devuelve 403 "Access Denied" a servidores en la nube, **incluido GitHub Actions** (comprobado). La agenda cultural está en `granada.org/inet/wagenda.nsf` (Lotus Notes, solo HTML; sin RSS/iCal/datos abiertos encontrados). Pendiente: email de la propietaria pidiendo formato reutilizable o acceso (borrador en docs/). |
 | Universidad de Granada (CANAL UGR) | ✅ **Conector hecho (S2)** | `canal.ugr.es/agenda-canal-ugr/proximas-actividades/` (HTML, ~3 páginas, ~45 actividades) + ficha de cada actividad solo para el campo de entrada (se cachea). Existe también `/wp-json/SI2/v1/agenda` pero solo da el día actual. robots.txt lo permite. Se descartan: actos institucionales, seminarios académicos (título "Seminario…/Defensa…"), sedes de Ceuta/Melilla/Santa Fe y en línea. |
 | Junta de Andalucía (datos abiertos) | 🟡 Poco útil para Granada capital | API `datos.juntadeandalucia.es/api/v0/schedule/all?format=json` (CC BY 4.0, ~900 eventos, mayoría antiguos). Solo 1 evento futuro en Granada capital (nov. 2026). Conector sencillo posible en Fase 3, baja prioridad. |
-| Diputación de Granada | ❓ Sin evaluar | Fase 3. |
-| Ticketmaster Discovery API | ✅ Buena opción | API oficial gratuita con clave; permite mostrar datos básicos con enlace. Cubre parte de los grandes conciertos. |
+| Diputación de Granada | 🟡 Aparcada (S3) | dipgra.es muy lenta (cortes de conexión) y su robots.txt prohíbe `/agenda-municipal`; su agenda es sobre todo de la provincia, no de Granada capital. Sus actos en la capital (p. ej. Palacio de los Condes de Gabia) → mejor contactar con ese centro. |
+| Ticketmaster Discovery API | ✅ **Conector hecho (S3), falta la clave** | API oficial gratuita con clave (5000 llamadas/día). Filtro `city=Granada`, se excluyen deportes, parking/VIP y cancelados. ⚠️ Revisar sus condiciones de uso de la API antes de publicar (atribución, enlace a la ficha). Sin probar contra la API real: los alias de lugares (`VENUE_ALIASES`) hay que ajustarlos al ver los primeros datos. |
 | Eventbrite API | 🟡 Parcial | Su API ya no permite buscar eventos por ciudad (se retiró en 2019-2020); solo eventos de organizadores/lugares concretos cuyo ID conozcamos. |
 | Webs de salas y teatros | 🟡 Caso a caso | Muchas tienen iCal/RSS o calendario sencillo. **Pedir permiso por email** (casi siempre dicen que sí: es publicidad gratis). Mejor aún: invitarles a usar el formulario. |
 | Viral Agenda | 🔴 No sin permiso | Es un agregador privado: su base de datos está protegida. Solo si nos dan permiso o acuerdo (se les puede escribir). |
@@ -177,7 +179,10 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - ✅ PR #1 fusionada (2026-11-23). Primer despliegue: la UGR dio un 503 momentáneo → se publicaron los datos guardados (el respaldo funcionó). Primera recogida diaria automática OK (commit del bot 2026-11-24).
 - (S2b, 2026-11-24) Añadidos reintentos HTTP en `PoliteSession` + pruebas (`scrapers/tests/test_http.py`).
 - ⏳ **Pendiente de la propietaria**: enviar el email al Ayuntamiento (docs/email-ayuntamiento.md).
-- **Siguiente paso: Fase 3** — más fuentes: Ticketmaster Discovery API (necesita clave gratuita), Diputación, Junta (baja prioridad), webs de salas con iCal; deduplicación entre fuentes. Si el Ayuntamiento responde, conector de granada.org.
+- (S3a) Nombre cambiado a **Ciudad en vivo** (dominio previsto ciudadenvivo.es).
+- **Fase 3 en curso (S3, 2026-11-24)**: hecho el conector Ticketmaster (con pruebas sin red), la deduplicación entre fuentes y el soporte de "fuente sin clave" (se salta sin error). Entorno cloud: añadidos dipgra.es y app.ticketmaster.com.
+- ⏳ **Pendiente de la propietaria**: crear la clave de Ticketmaster y guardarla en GitHub como secreto `TICKETMASTER_API_KEY` (pasos en el chat de S3). Después, lanzar el workflow a mano y revisar los eventos y lugares que salgan (ajustar `VENUE_ALIASES` y filtros).
+- **Siguiente paso (resto de Fase 3)**: probar Ticketmaster con datos reales; webs de salas con iCal/RSS (Teatro Isabel la Católica, Auditorio/OCG, Centro Lorca, CajaGranada…: comprobar qué publican y sus condiciones); Junta (baja prioridad). Mostrar "también en: …" con el campo `also` (opcional). Si el Ayuntamiento responde, conector de granada.org.
 
 ## 9. Registro de sesiones
 - S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases. Repo creado. Nombre: Agendalia.
@@ -185,3 +190,4 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - S2 — 2026-11-23 — Fase 2: granada.org bloquea servidores en la nube (también GitHub) → conector CANAL UGR, recogida diaria en la Action, datos reales en la web, archivo de eventos pasados, borrador de email al Ayuntamiento.
 - S2b — 2026-11-24 — Reintentos ante errores momentáneos de las fuentes (tras un 503 de la UGR en el primer despliegue).
 - S3a — 2026-11-24 — Cambio de nombre a **Ciudad en vivo** (dominio previsto ciudadenvivo.es). Título de página: "Granada · lema · Ciudad en vivo".
+- S3 — 2026-11-24 — Fase 3 (1.ª parte): conector Ticketmaster (pendiente de clave), deduplicación entre fuentes, Diputación descartada por ahora.

@@ -34,6 +34,9 @@ jobs:
       - name: Recoger eventos
         # Si una fuente falla se conservan sus últimos datos buenos y la web se publica igualmente.
         continue-on-error: true
+        env:
+          # Clave gratuita de developer.ticketmaster.com guardada como secreto del repositorio.
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
         run: python -m scrapers.run
       - name: Guardar datos en el repositorio
         if: github.ref == 'refs/heads/main'

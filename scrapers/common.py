@@ -49,20 +49,22 @@ class PoliteSession:
     RETRY_WAITS = (5, 20)  # segundos antes del 2.º y 3.er intento
     MAX_RETRY_AFTER = 60
 
-    def get(self, url: str) -> requests.Response:
-        if not self._allowed(url):
+    def get(self, url: str, params: dict | None = None, robots: bool = True) -> requests.Response:
+        """GET educado. `params` va aparte de la URL para que las claves de API no salgan en
+        los mensajes. `robots=False` solo para APIs oficiales (no son páginas web)."""
+        if robots and not self._allowed(url):
             raise PermissionError(f"robots.txt no permite: {url}")
         for attempt in range(len(self.RETRY_WAITS) + 1):
             wait = self.delay - (time.monotonic() - self._last)
             if wait > 0:
                 self._sleep(wait)
             try:
-                r = self.s.get(url, timeout=self.timeout)
+                r = self.s.get(url, params=params, timeout=self.timeout)
             except (requests.ConnectionError, requests.Timeout) as exc:
                 r, error = None, exc
             self._last = time.monotonic()
             if r is not None and r.status_code not in self.RETRY_STATUS:
-                r.raise_for_status()  # 404, 403…: no tiene sentido reintentar
+                _raise_for_status(r, url)  # 404, 403…: no tiene sentido reintentar
                 return r
             if attempt == len(self.RETRY_WAITS):
                 break
@@ -74,12 +76,23 @@ class PoliteSession:
             self._sleep(pause)
         if r is None:
             raise error
-        r.raise_for_status()
+        _raise_for_status(r, url)
         return r
 
     @staticmethod
     def _sleep(seconds: float) -> None:
         time.sleep(seconds)
+
+
+def _raise_for_status(r: requests.Response, url: str) -> None:
+    """Como raise_for_status, pero el mensaje lleva la URL sin parámetros (sin claves)."""
+    if r.status_code >= 400:
+        raise requests.HTTPError(f"HTTP {r.status_code} en {url}", response=r)
+
+
+class SkipSource(Exception):
+    """El conector no puede ejecutarse (p. ej. falta su clave de API). No es un fallo:
+    se conservan sus datos anteriores sin marcar error."""
 
 
 # ---------- Fechas en español ----------

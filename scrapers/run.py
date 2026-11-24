@@ -6,6 +6,7 @@ Uso:  python -m scrapers.run
   Si un conector falla (o devuelve sospechosamente pocos eventos), se conserva ese
   último resultado y los demás siguen.
 - Los eventos ya terminados pasan al archivo data/<ciudad>/archive/AAAA-MM.json.
+- Un mismo evento publicado por varias fuentes se muestra una sola vez (ver dedupe.py).
 """
 from __future__ import annotations
 
@@ -15,16 +16,19 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-from .common import TZ
-from .granada import ugr
+from .common import TZ, SkipSource
+from .dedupe import dedupe
+from .granada import ticketmaster, ugr
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
 # Conectores activos por ciudad: (nombre de la fuente, función fetch).
+# El ORDEN es la prioridad en caso de duplicado: primero las fuentes primarias (quien organiza).
 CONNECTORS = {
     "granada": [
         ("ugr", ugr.fetch),
+        ("ticketmaster", ticketmaster.fetch),
     ],
 }
 
@@ -63,8 +67,12 @@ def run_city(city: str, connectors) -> bool:
                 raise RuntimeError(f"solo {len(events)} eventos (antes {len(prev)}): ¿ha cambiado la web?")
             dump_list(src_file, events)
             for v in new_venues:
-                venues[v["id"]] = {**venues.get(v["id"], {}), **v}
+                # Si el lugar ya existe se respetan sus datos (pueden estar corregidos a mano).
+                venues[v["id"]] = {**v, **venues.get(v["id"], {})}
             source_events[name] = events
+        except SkipSource as why:
+            print(f"[{name}] se salta ({why}); se conservan sus {len(prev)} eventos anteriores")
+            source_events[name] = prev
         except Exception:  # noqa: BLE001
             ok = False
             print(f"[{name}] ERROR, se conservan los datos anteriores ({len(prev)} eventos):", file=sys.stderr)
@@ -72,7 +80,9 @@ def run_city(city: str, connectors) -> bool:
             source_events[name] = prev
 
     # Fuentes que ya no están activas (o retiradas) no se incluyen.
-    all_events = [e for evs in source_events.values() for e in evs]
+    all_events, dupes = dedupe([e for evs in source_events.values() for e in evs])
+    if dupes:
+        print(f"[{city}] {dupes} eventos duplicados entre fuentes fusionados")
 
     # Archivar eventos terminados que estaban publicados.
     previous = load(city_dir / "events.json", [])
