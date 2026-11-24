@@ -1,4 +1,4 @@
-# Agendalia
+# Ciudad en vivo
 
 Web pública que reúne los eventos culturales de Granada (y en el futuro de otras ciudades) (conciertos, teatro, cine, exposiciones…), gratuitos y de pago, actualizada automáticamente cada día.
 

@@ -1,4 +1,4 @@
-# Agendalia — memoria del proyecto
+# Ciudad en vivo — memoria del proyecto
 
 > Este archivo es la memoria compartida entre sesiones. **Léelo entero al empezar cada sesión y actualízalo al terminar** (sección "Estado actual" y "Registro de sesiones").
 
@@ -86,7 +86,7 @@ Las exposiciones (eventos de varios días) llevan `start` y `end` con `all_day: 
 /data/<ciudad>/venues.json      lugares (los de los conectores se añaden solos; los manuales se conservan)
 /data/<ciudad>/sources/<fuente>.json   último resultado bueno de cada conector
 /data/<ciudad>/archive/AAAA-MM.json    eventos ya pasados (archivo)
-/scrapers/common.py     sesión HTTP educada (UA AgendaliaBot, robots.txt, pausa 1,5 s, 3 intentos ante 429/5xx/cortes: esperas 5 s y 20 s, respeta Retry-After), fechas en español
+/scrapers/common.py     sesión HTTP educada (UA CiudadEnVivoBot, robots.txt, pausa 1,5 s, 3 intentos ante 429/5xx/cortes: esperas 5 s y 20 s, respeta Retry-After), fechas en español
 /scrapers/granada/ugr.py   conector CANAL UGR
 /scrapers/run.py        ejecuta conectores (lista CONNECTORS), fusiona, archiva  → `python -m scrapers.run`
 /scrapers/tests/        pruebas sin red → `python -m unittest discover -s scrapers/tests -t .`
@@ -153,10 +153,11 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - (S0) Repositorio público `beacruzmo9/agenda-eventos` (solo la propietaria y Claude pueden modificarlo) → GitHub Pages.
 - (S0) Multiciudad e idiomas ES/EN previstos desde el principio; solo Granada capital activa.
 - (S2) Los datos generados se guardan en el repo (commit automático del bot) → historial y "último dato bueno" aunque una fuente falle. Si un conector devuelve <30 % de los eventos que tenía, se considera fallo y se conserva lo anterior.
+- (S3) Cambio de nombre: Agendalia → **Ciudad en vivo** (web, bot `CiudadEnVivoBot`, commits del bot `ciudadenvivo-bot`, README, email al Ayuntamiento). Dominio previsto: ciudadenvivo.es.
 - (S2) La UGR publica muchos seminarios de investigación: se filtran por título para no ahogar la agenda cultural. Revisar el criterio si la propietaria lo pide.
 
 ## 7. Respuestas de la propietaria (S0) y decisiones derivadas
-1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). **Elegido: Agendalia.** ⏳ Pendiente: comprobar si agendalia.es / .com están libres (no comprar aún). Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
+1. **Nombre**: la web debe servir a la larga para **cualquier capital** (selector de ciudad). ~~Agendalia~~ → **(S3) Nombre definitivo: Ciudad en vivo.** Dominio libre según la propietaria: **ciudadenvivo.es** (no comprado aún; se usará en Fase 8). Repo: `beacruzmo9/agenda-eventos` (el nombre del repo puede quedarse así).
    → **Multiciudad desde el diseño**: campo `city` en eventos y lugares, URLs `/{idioma}/{ciudad}/...` (ej. `/es/granada/`), conectores agrupados por ciudad (`scrapers/granada/`). Solo Granada activa al principio.
 2. **Ámbito**: Granada capital. Área metropolitana/provincia más adelante.
 3. **Cine** (a criterio de Claude): incluir cine "evento" — filmoteca, ciclos, cineclubs (p. ej. UGR), cine de verano, VOS especiales, preestrenos, festivales. **No** la cartelera comercial completa (cientos de sesiones, ahogaría el resto); en su lugar, enlace a la cartelera de cada cine en la página del lugar.
@@ -183,3 +184,4 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - S1 — 2026-11-23 — Fase 1: esqueleto web, filtros, ES/EN, datos de ejemplo, workflow de GitHub Pages.
 - S2 — 2026-11-23 — Fase 2: granada.org bloquea servidores en la nube (también GitHub) → conector CANAL UGR, recogida diaria en la Action, datos reales en la web, archivo de eventos pasados, borrador de email al Ayuntamiento.
 - S2b — 2026-11-24 — Reintentos ante errores momentáneos de las fuentes (tras un 503 de la UGR en el primer despliegue).
+- S3a — 2026-11-24 — Cambio de nombre a **Ciudad en vivo** (dominio previsto ciudadenvivo.es). Título de página: "Granada · lema · Ciudad en vivo".

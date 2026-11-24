@@ -20,7 +20,7 @@ SOURCE = "ugr"
 LIST_URL = "https://canal.ugr.es/agenda-canal-ugr/proximas-actividades/"
 MAX_PAGES = 20
 
-# Tipos de actividad de la UGR → categorías de Agendalia (por orden de prioridad).
+# Tipos de actividad de la UGR → categorías de Ciudad en vivo (por orden de prioridad).
 CATEGORY_MAP = [
     ("conciertos-y-actividades-musicales", "concierto"),
     ("teatro-y-artes-escenicas", "teatro"),

@@ -1,4 +1,4 @@
-"""Utilidades comunes para todos los conectores de Agendalia.
+"""Utilidades comunes para todos los conectores de Ciudad en vivo.
 
 - Sesión HTTP educada: User-Agent identificado, respeta robots.txt y hace pausas.
 - Funciones para fechas en español y para el esquema de evento.
@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-USER_AGENT = "AgendaliaBot/0.1 (+https://beacruzmo9.github.io/agenda-eventos/)"
+USER_AGENT = "CiudadEnVivoBot/0.1 (+https://beacruzmo9.github.io/agenda-eventos/)"
 TZ = ZoneInfo("Europe/Madrid")
 
 

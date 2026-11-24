@@ -1,5 +1,5 @@
-// Configuración general de Agendalia.
-export const SITE_NAME = 'Agendalia';
+// Configuración general de Ciudad en vivo.
+export const SITE_NAME = 'Ciudad en vivo';
 
 export const LANGS = ['es', 'en'] as const;
 export type Lang = (typeof LANGS)[number];
