@@ -86,7 +86,7 @@ Las exposiciones (eventos de varios días) llevan `start` y `end` con `all_day: 
 /data/<ciudad>/venues.json      lugares (los de los conectores se añaden solos; los manuales se conservan)
 /data/<ciudad>/sources/<fuente>.json   último resultado bueno de cada conector
 /data/<ciudad>/archive/AAAA-MM.json    eventos ya pasados (archivo)
-/scrapers/common.py     sesión HTTP educada (UA AgendaliaBot, robots.txt, pausa 1,5 s), fechas en español
+/scrapers/common.py     sesión HTTP educada (UA AgendaliaBot, robots.txt, pausa 1,5 s, 3 intentos ante 429/5xx/cortes: esperas 5 s y 20 s, respeta Retry-After), fechas en español
 /scrapers/granada/ugr.py   conector CANAL UGR
 /scrapers/run.py        ejecuta conectores (lista CONNECTORS), fusiona, archiva  → `python -m scrapers.run`
 /scrapers/tests/        pruebas sin red → `python -m unittest discover -s scrapers/tests -t .`
@@ -173,10 +173,13 @@ No es asesoramiento jurídico; revisar con un profesional si la web crece o se m
 - Mejoras menores anotadas para más adelante: guardar filtros en la URL (para compartir enlaces), botón "volver arriba", página de detalle por evento.
 - **Fase 2 hecha (S2, 2026-11-23)**: granada.org bloquea GitHub (403) → primer conector real = **CANAL UGR** (36 eventos útiles al estrenarlo: exposiciones, cineclub, conferencias, conciertos). `SAMPLE_DATA = false`, eventos de ejemplo eliminados. Precio desconocido → `price.free: null` y se muestra "Consultar" (no aparece en filtros gratis/de pago). Workflow: pruebas → `scrapers.run` (si falla, se publica igual con los últimos datos buenos) → commit automático de `data/` en main → build. Probado en GitHub Actions desde la rama de trabajo.
 - Entorno cloud de Claude: entorno personal `agenda-eventos` con acceso a granada.org, canal.ugr.es y datos/www.juntadeandalucia.es. Para nuevas fuentes hay que añadir el dominio.
-- ⏳ **Pendiente de la propietaria**: (1) fusionar la rama `claude/zen-archimedes-p0y0ak` en `main` (pull request) para que la recogida diaria empiece; (2) enviar el email al Ayuntamiento (docs/email-ayuntamiento.md).
+- ✅ PR #1 fusionada (2026-11-23). Primer despliegue: la UGR dio un 503 momentáneo → se publicaron los datos guardados (el respaldo funcionó). Primera recogida diaria automática OK (commit del bot 2026-11-24).
+- (S2b, 2026-11-24) Añadidos reintentos HTTP en `PoliteSession` + pruebas (`scrapers/tests/test_http.py`).
+- ⏳ **Pendiente de la propietaria**: enviar el email al Ayuntamiento (docs/email-ayuntamiento.md).
 - **Siguiente paso: Fase 3** — más fuentes: Ticketmaster Discovery API (necesita clave gratuita), Diputación, Junta (baja prioridad), webs de salas con iCal; deduplicación entre fuentes. Si el Ayuntamiento responde, conector de granada.org.
 
 ## 9. Registro de sesiones
 - S0 — 2026-11-23 — Planificación. Arquitectura, evaluación de fuentes, checklist legal, plan por fases. Repo creado. Nombre: Agendalia.
 - S1 — 2026-11-23 — Fase 1: esqueleto web, filtros, ES/EN, datos de ejemplo, workflow de GitHub Pages.
 - S2 — 2026-11-23 — Fase 2: granada.org bloquea servidores en la nube (también GitHub) → conector CANAL UGR, recogida diaria en la Action, datos reales en la web, archivo de eventos pasados, borrador de email al Ayuntamiento.
+- S2b — 2026-11-24 — Reintentos ante errores momentáneos de las fuentes (tras un 503 de la UGR en el primer despliegue).

@@ -44,16 +44,42 @@ class PoliteSession:
             self._robots[base] = rp
         return rp.can_fetch(USER_AGENT, url)
 
+    # Errores momentáneos que merece la pena reintentar (servidor saturado, caído un instante…).
+    RETRY_STATUS = {429, 500, 502, 503, 504}
+    RETRY_WAITS = (5, 20)  # segundos antes del 2.º y 3.er intento
+    MAX_RETRY_AFTER = 60
+
     def get(self, url: str) -> requests.Response:
         if not self._allowed(url):
             raise PermissionError(f"robots.txt no permite: {url}")
-        wait = self.delay - (time.monotonic() - self._last)
-        if wait > 0:
-            time.sleep(wait)
-        r = self.s.get(url, timeout=self.timeout)
-        self._last = time.monotonic()
+        for attempt in range(len(self.RETRY_WAITS) + 1):
+            wait = self.delay - (time.monotonic() - self._last)
+            if wait > 0:
+                self._sleep(wait)
+            try:
+                r = self.s.get(url, timeout=self.timeout)
+            except (requests.ConnectionError, requests.Timeout) as exc:
+                r, error = None, exc
+            self._last = time.monotonic()
+            if r is not None and r.status_code not in self.RETRY_STATUS:
+                r.raise_for_status()  # 404, 403…: no tiene sentido reintentar
+                return r
+            if attempt == len(self.RETRY_WAITS):
+                break
+            pause = self.RETRY_WAITS[attempt]
+            if r is not None and (ra := r.headers.get("Retry-After", "")).isdigit():
+                pause = max(pause, min(int(ra), self.MAX_RETRY_AFTER))
+            reason = f"HTTP {r.status_code}" if r is not None else type(error).__name__
+            print(f"[http] {reason} en {url}; reintento en {pause} s")
+            self._sleep(pause)
+        if r is None:
+            raise error
         r.raise_for_status()
         return r
+
+    @staticmethod
+    def _sleep(seconds: float) -> None:
+        time.sleep(seconds)
 
 
 # ---------- Fechas en español ----------
