@@ -30,5 +30,6 @@
   {"id": "sala-planta-baja", "city": "granada", "name": "Sala Planta Baja"},
   {"id": "teatro-alhambra", "city": "granada", "name": "Teatro Alhambra", "address": "C/ Molinos, 54"},
   {"id": "teatro-isabel-la-catolica", "city": "granada", "name": "Teatro Isabel la Católica", "address": "Acera del Casino, s/n"},
-  {"id": "ugr-varias-sedes", "city": "granada", "name": "Varias sedes (UGR)"}
+  {"id": "ugr-varias-sedes", "city": "granada", "name": "Varias sedes (UGR)"},
+  {"id": "videoconferencia-zoom", "city": "granada", "name": "Videoconferencia (Zoom)"}
 ]
